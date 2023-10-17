@@ -27,7 +27,7 @@ This article applies only to testing Word, Excel, PowerPoint, and Project add-in
 
 The following video walks you through the process of sideloading your add-in in Office on the web or desktop using a shared folder catalog.  
 
-> [!VIDEO https://www.youtube.com/embed/XXsAw2UUiQo]
+> [!VIDEO "Sideloading Office Add-ins into Office Desktop or Office Online" https://www.youtube.com/embed/XXsAw2UUiQo]
 
 ## Share a folder
 

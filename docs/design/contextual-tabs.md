@@ -596,4 +596,4 @@ function showDataTab() {
 - [Code sample: Create custom contextual tabs on the ribbon](https://github.com/OfficeDev/Office-Add-in-samples/tree/main/Samples/office-contextual-tabs)
 - Community demo of contextual tabs sample
 
-    > [!VIDEO "Community demo of contextual tabs sample" https://www.youtube.com/embed/9tLfm4boQIo]
+    > [!VIDEO https://www.youtube.com/embed/9tLfm4boQIo "Community demo of contextual tabs sample"]

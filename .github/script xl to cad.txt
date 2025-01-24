@@ -1,0 +1,396 @@
+Sub DrawingToACAD()
+    
+    Dim AcadObj As Object
+    Dim aline, atext As Object
+    Dim TextStyle1 As Object
+    Dim startPoint(0 To 2) As Double
+    Dim endPoint(0 To 2) As Double
+    Dim pointdistance(0 To 2) As Double
+    Dim Datum(), Jbaris, Baris, JCross, Spasi, Mistar, X1, Y1, X2, Y2, height, Tinggi_kotak As Integer
+    Dim Elev As Double
+    Dim text As String
+    Dim BasePoint(0 To 2) As Double
+    Dim newFontFile As String
+    Dim textStyle As Object
+    Dim bariscross As Double
+    Dim awalcross(0 To 2) As Double
+    Dim letakpatok(0 To 2) As Double
+    Dim textGrid As String
+    Dim Grid As Double
+    Dim letakgrid(0 To 2) As Double
+                        
+    ReDim Datum(1000), Distance(1000, 1000), CROSS(1000, 1000), Patok(1000)
+        
+'LOAD CAD
+    Set AcadObj = GetObject(, "AutoCAD.Application")
+
+'UBAH TEKS STYLE
+    Set TextStyle1 = AcadObj.ActiveDocument.ActiveTextStyle
+    newFontFile = "c:\windows\Fonts/tahoma.ttf"
+    TextStyle1.fontFile = newFontFile
+
+'BUAT LAYER
+    Set lyrGrsver = AcadObj.ActiveDocument.Layers.Add("Grsver")
+    lyrGrsver.Color = acYellow
+    Set lyrDashed2 = AcadObj.ActiveDocument.Layers.Add("Dashed2")
+    lyrDashed2.Color = acYellow
+    Set lyrKotak = AcadObj.ActiveDocument.Layers.Add("Kotak")
+    lyrKotak.Color = acGreen
+    Set lyrGrid = AcadObj.ActiveDocument.Layers.Add("Grid")
+    lyrGrid.Color = acRed
+    Set lyrText_Kotak = AcadObj.ActiveDocument.Layers.Add("Text Kotak")
+    lyrText_Kotak.Color = acWhite
+    Set lyrText_Elev = AcadObj.ActiveDocument.Layers.Add("Text Elevation")
+    lyrText_Elev.Color = acWhite
+    Set lyrText_Point = AcadObj.ActiveDocument.Layers.Add("Text Point")
+    lyrText_Point.Color = acWhite
+    Set lyrText_Distance = AcadObj.ActiveDocument.Layers.Add("Text Distance")
+    lyrText_Distance.Color = acWhite
+    Set lyrCross = AcadObj.ActiveDocument.Layers.Add("Cross")
+    lyrCross.Color = acGreen
+    Set lyrText_Patok = AcadObj.ActiveDocument.Layers.Add("Teks Patok")
+    lyrText_Patok.Color = acWhite
+    Set lyrText_Grid = AcadObj.ActiveDocument.Layers.Add("Teks Grid")
+    lyrText_Grid.Color = acWhite
+    Set lyrText_Datum = AcadObj.ActiveDocument.Layers.Add("Teks Datum")
+    lyrText_Datum.Color = acWhite
+
+'BUAT LINETYPE
+    found = False
+    For Each entry In AcadObj.ActiveDocument.Linetypes
+        If StrComp(entry.Name, "DASHED", 1) = 0 Then
+            found = True
+            Exit For
+        End If
+    Next
+    If Not (found) Then AcadObj.ActiveDocument.Linetypes.Load "DASHED", "acad.lin"
+    lyrDashed2.Linetype = "DASHED"
+
+'FORMAT
+    Spasi = 200
+    Tinggi_kotak = -48
+    
+'HITUNG BARIS DATA
+    Jbaris = 4
+    While Worksheets(1).Cells(Jbaris, 2) <> ""
+        Jbaris = Jbaris + 1
+        While Worksheets(1).Cells(Jbaris + 1, 1) <> ""
+            Jbaris = Jbaris + 1
+            While Worksheets(1).Cells(Jbaris, 1) <> ""
+                Jbaris = Jbaris + 1
+            Wend
+        Wend
+    Wend
+    
+'HITUNG DATUM
+    JCross = 0
+    Baris = 4
+    While Baris <= Jbaris
+            
+        If Worksheets(1).Cells(Baris, 4) <> "" Then
+            Elev = Worksheets(1).Cells(Baris, 4)
+            JCross = JCross + 1
+            While Worksheets(1).Cells(Baris, 4) <> ""
+                If Worksheets(1).Cells(Baris, 4) < Elev Then
+                    Elev = Worksheets(1).Cells(Baris, 4)
+                Else
+                    Elev = Elev
+                End If
+            Baris = Baris + 1
+            Wend
+            Datum(JCross) = Fix(Elev - 2)
+'            Worksheets(1).Cells(Baris - 1, 6) = Datum(JCross)
+            
+        End If
+    
+    Baris = Baris + 1
+    Wend
+        
+'UTAMA
+    Baris = 4
+    bariscross = 1
+    JmlDIGIT = 3
+    JCross = 0
+    While Baris <= Jbaris
+        If Worksheets(1).Cells(Baris, 3) <> "" Then
+            JCross = JCross + 1
+        End If
+        startPoint(0) = 0
+        startPoint(1) = Tinggi_kotak - Spasi * (JCross - 1)
+        endPoint(0) = 0
+        endPoint(1) = 0 - Spasi * (JCross - 1)
+      
+        startPoint(0) = 20
+        
+        While Worksheets(1).Cells(Baris, 3) <> ""
+        'BUAT GARIS VERTIKAL
+            AcadObj.ActiveDocument.activeLayer = lyrGrsver
+            startPoint(0) = startPoint(0) + Worksheets(1).Cells(Baris, 3) * 10
+            startPoint(1) = Tinggi_kotak / 2 - Spasi * (JCross - 1)
+            endPoint(0) = startPoint(0)
+            endPoint(1) = 0 - Spasi * (JCross - 1)
+            
+            If Worksheets(1).Cells(Baris, 3) <> "" Then
+                If Worksheets(1).Cells(Baris, 3) <> 0 Then
+                    Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                 ElseIf Worksheets(1).Cells(Baris - 1, 3) = "" Then
+                    Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                End If
+            End If
+            
+        'BUAT GARIS DASHED2
+            AcadObj.ActiveDocument.activeLayer = lyrDashed2
+                startPoint(0) = endPoint(0)
+                startPoint(1) = endPoint(1)
+                endPoint(0) = startPoint(0)
+                endPoint(1) = startPoint(1) + Worksheets(1).Cells(Baris, 4) * 10 - Datum(JCross) * 10
+            
+            If Worksheets(1).Cells(Baris, 3) <> "" Then
+                If Worksheets(1).Cells(Baris + 1, 3) <> 0 Then
+                    Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                    aline.LinetypeScale = 4
+                    aline.Update
+                ElseIf Worksheets(1).Cells(Baris + 1, 3) = 0 And Worksheets(1).Cells(Baris + 1, 4) > Worksheets(1).Cells(Baris, 4) Then
+                    Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                    aline.LinetypeScale = 4
+                    aline.Update
+                ElseIf Worksheets(1).Cells(Baris + 1, 3) = "" And Worksheets(1).Cells(Baris, 3) <> 0 Then
+                    Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                    aline.LinetypeScale = 4
+                    aline.Update
+                ElseIf Worksheets(1).Cells(Baris + 1, 3) = "" And Worksheets(1).Cells(Baris, 3) = 0 And Worksheets(1).Cells(Baris - 1, 4) > Worksheets(1).Cells(Baris, 4) Then
+                    Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                    aline.LinetypeScale = 4
+                    aline.Update
+                End If
+            End If
+                             
+        'BUAT TEXT ELEVATION
+            height = 2.5
+            JmlDIGIT = 3
+            AcadObj.ActiveDocument.activeLayer = lyrText_Elev
+
+            Worksheets(1).Cells(Baris, 6).FormulaR1C1 = "=FIXED(RC[-2],3)"
+            Worksheets(1).Cells(Baris, 6).HorizontalAlignment = xlRight
+            text = Worksheets(1).Cells(Baris, 6)
+            
+            startPoint(1) = startPoint(1) - 6
+            Set atext = AcadObj.ActiveDocument.ModelSpace.AddText(text, startPoint, height)
+            atext.Alignment = acAlignmentBottomCenter
+            atext.TextAlignmentPoint = startPoint
+            atext.Rotate startPoint, 1.570796327
+            
+        'BUAT TEXT POINT
+            height = 2.5
+            AcadObj.ActiveDocument.activeLayer = lyrText_Point
+            text = Worksheets(1).Cells(Baris, 2)
+            Set atext = AcadObj.ActiveDocument.ModelSpace.AddText(text, endPoint, height)
+            atext.Alignment = acAlignmentBottomCenter
+            atext.TextAlignmentPoint = endPoint
+            
+        'BUAT TEXT DISTANCE
+            height = 2.5
+            AcadObj.ActiveDocument.activeLayer = lyrText_Distance
+            If Worksheets(1).Cells(Baris - 1, 3) <> "" Then
+                pointdistance(0) = (startPoint(0) + Distance(JCross, bariscross - 1)) / 2
+                pointdistance(1) = startPoint(1) - 12
+                
+                Worksheets(1).Cells(Baris, 5).FormulaR1C1 = "=FIXED(RC[-2],2)"
+                Worksheets(1).Cells(Baris, 5).HorizontalAlignment = xlRight
+                text = Worksheets(1).Cells(Baris, 5)
+                
+                If text = 0 Then
+                ElseIf text < 0.5 Then
+                    height = 2
+                    Set atext = AcadObj.ActiveDocument.ModelSpace.AddText(text, pointdistance, height)
+                    atext.Alignment = acAlignmentMiddleCenter
+                    atext.TextAlignmentPoint = pointdistance
+                    atext.Rotate pointdistance, 1.570796327
+                ElseIf text < 0.8 Then
+                    height = 2
+                    Set atext = AcadObj.ActiveDocument.ModelSpace.AddText(text, pointdistance, height)
+                    atext.Alignment = acAlignmentMiddleCenter
+                    atext.TextAlignmentPoint = pointdistance
+                Else
+                    Set atext = AcadObj.ActiveDocument.ModelSpace.AddText(text, pointdistance, height)
+                    atext.Alignment = acAlignmentMiddleCenter
+                    atext.TextAlignmentPoint = pointdistance
+                End If
+            End If
+            
+            Distance(JCross, bariscross) = startPoint(0)
+            
+        'BUAT GARIS CROSS
+            AcadObj.ActiveDocument.activeLayer = lyrCross
+            If Worksheets(1).Cells(Baris - 1, 3) <> "" Then
+                awalcross(0) = Distance(JCross, bariscross - 1)
+                awalcross(1) = CROSS(JCross, bariscross - 1)
+                Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(awalcross, endPoint)
+            End If
+        
+            CROSS(JCross, bariscross) = endPoint(1)
+        
+        'BUAT TEXT PATOK
+            height = 6
+            AcadObj.ActiveDocument.activeLayer = lyrText_Patok
+            If Worksheets(1).Cells(Baris - 1, 2) = "" And Worksheets(1).Cells(Baris - 1, 1) <> "" Then
+                Patok(JCross) = Worksheets(1).Cells(Baris - 1, 1)
+            End If
+            If Worksheets(1).Cells(Baris, 2) <> "" And Worksheets(1).Cells(Baris + 1, 2) = "" Then
+                letakpatok(0) = (startPoint(0) + 10 + 50) / 2 - 50
+                letakpatok(1) = startPoint(1) - 53
+                Set atext = AcadObj.ActiveDocument.ModelSpace.AddText(Patok(JCross), letakpatok, height)
+                atext.Alignment = acAlignmentBottomCenter
+                atext.TextAlignmentPoint = letakpatok
+            End If
+                         
+        If Worksheets(1).Cells(Baris, 3) <> "" And Worksheets(1).Cells(Baris + 1, 3) = "" Then
+           'BUAT KOTAK
+                AcadObj.ActiveDocument.activeLayer = lyrKotak
+    
+                startPoint(0) = startPoint(0) + 10
+                startPoint(1) = 0 - Spasi * (JCross - 1)
+                endPoint(0) = -50
+                endPoint(1) = startPoint(1)
+                Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                retobj = aline.ArrayRectangular(5, 1, 1, -12, 0, 0)
+    
+                endPoint(0) = startPoint(0)
+                endPoint(1) = Tinggi_kotak - Spasi * (JCross - 1)
+                Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+    
+                startPoint(0) = 0
+                startPoint(1) = Tinggi_kotak - Spasi * (JCross - 1)
+                endPoint(0) = 0
+                endPoint(1) = 0 - Spasi * (JCross - 1)
+                Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                retobj = aline.ArrayRectangular(1, 2, 1, 0, -50, 0)
+       
+            'BUAT TEKS KOTAK
+                height = 3
+    
+                AcadObj.ActiveDocument.activeLayer = lyrText_Kotak
+
+                startPoint(0) = -46
+                startPoint(1) = 3.5 - Spasi * (JCross - 1)
+                text = "Datum :"
+                Set atext = AcadObj.ActiveDocument.ModelSpace.AddText(text, startPoint, height)
+                atext.Alignment = acAlignmentMiddleLeft
+                atext.TextAlignmentPoint = startPoint
+                
+                startPoint(0) = -46
+                startPoint(1) = startPoint(1) - 9.5
+                text = "Elevation (m)"
+                Set atext = AcadObj.ActiveDocument.ModelSpace.AddText(text, startPoint, height)
+                atext.Alignment = acAlignmentMiddleLeft
+                atext.TextAlignmentPoint = startPoint
+
+                startPoint(0) = -46
+                startPoint(1) = startPoint(1) - 12
+                text = "Distance (m)"
+                Set atext = AcadObj.ActiveDocument.ModelSpace.AddText(text, startPoint, height)
+                atext.Alignment = acAlignmentMiddleLeft
+                atext.TextAlignmentPoint = startPoint
+        
+            'BUAT TEKS DATUM
+                height = 3
+    
+                AcadObj.ActiveDocument.activeLayer = lyrText_Datum
+                JmlDIGIT = 2
+                startPoint(0) = -26
+                startPoint(1) = 3.5 - Spasi * (JCross - 1)
+                If Datum(JCross) = 0 Then
+                    text = "%%p" & Datum(JCross) & ".00"
+                    ElseIf Datum(JCross) < 0 Then
+                        text = Datum(JCross) & ".00"
+                    Else
+                        text = "+" & Datum(JCross) & ".00"
+                End If
+                Set atext = AcadObj.ActiveDocument.ModelSpace.AddText(text, startPoint, height)
+                atext.Alignment = acAlignmentMiddleLeft
+                atext.TextAlignmentPoint = startPoint
+                
+            'BUAT MISTAR
+                Mistar = 80
+    
+                AcadObj.ActiveDocument.activeLayer = lyrGrid
+
+                startPoint(0) = 0
+                startPoint(1) = 10 - Spasi * (JCross - 1)
+                endPoint(0) = 0
+                endPoint(1) = Mistar - Spasi * (JCross - 1)
+                Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+
+                X1 = 0
+                Y1 = 10
+                X2 = -3
+            
+                While (Y1 <= Mistar)
+                    startPoint(0) = X1
+                    startPoint(1) = Y1 - Spasi * (JCross - 1)
+                    endPoint(0) = X2
+                    endPoint(1) = Y1 - Spasi * (JCross - 1)
+                    Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                
+                    Y1 = Y1 + 10
+                    If (Y1 <= Mistar) Then
+                        startPoint(0) = X1
+                        startPoint(1) = Y1 - 5 - Spasi * (JCross - 1)
+                        endPoint(0) = X2 + 1
+                        endPoint(1) = Y1 - 5 - Spasi * (JCross - 1)
+                        Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                    End If
+                
+                    Y2 = 9
+                    If (Y1 <= Mistar) Then
+                        While (Y2 <> 5)
+                            startPoint(0) = X1
+                            startPoint(1) = Y1 - Y2 - Spasi * (JCross - 1)
+                            endPoint(0) = X2 + 2
+                            endPoint(1) = Y1 - Y2 - Spasi * (JCross - 1)
+                            Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                            Y2 = Y2 - 1
+                        Wend
+                    End If
+        
+                    Y2 = 4
+                    If (Y1 <= Mistar) Then
+                        While (Y2 <> 0)
+                            startPoint(0) = X1
+                            startPoint(1) = Y1 - Y2 - Spasi * (JCross - 1)
+                            endPoint(0) = X2 + 2
+                            endPoint(1) = Y1 - Y2 - Spasi * (JCross - 1)
+                            Set aline = AcadObj.ActiveDocument.ModelSpace.AddLine(startPoint, endPoint)
+                            Y2 = Y2 - 1
+                        Wend
+                    End If
+                Wend
+        
+            'BUAT TEXT GRID
+                height = 2
+                Grid = 1
+                AcadObj.ActiveDocument.activeLayer = lyrText_Grid
+                While Grid <= 8
+                    letakgrid(0) = -5
+                    letakgrid(1) = 10 * Grid - Spasi * (JCross - 1)
+                    textGrid = (Datum(JCross) + Grid) & ".00"
+                    Set atext = AcadObj.ActiveDocument.ModelSpace.AddText(textGrid, letakgrid, height)
+                    atext.Alignment = acAlignmentMiddleRight
+                    atext.TextAlignmentPoint = letakgrid
+                    Grid = Grid + 1
+                Wend
+
+            End If
+                  
+        bariscross = bariscross + 1
+        Baris = Baris + 1
+        Wend
+                  
+    Baris = Baris + 1
+    Wend
+    ZoomExtents
+    MsgBox "SIMSALABIM", vbInformation, "DODI SIAHAAN 2.1"
+
+
+
+End Sub
